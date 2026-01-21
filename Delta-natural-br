@@ -1,209 +1,164 @@
---[[
-	Orbit System
-	Parte 1 - Base do sistema (servidor)
-
-	Essa parte:
-	- Cria dados por player
-	- Recebe ON / OFF
-	- Recebe ALTURA
-	- NÃO faz nada no jogo ainda
-]]
-
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local remote = ReplicatedStorage:WaitForChild("OrbitRemote")
-
--- Tabela de dados por jogador
-local playerData = {}
-
--- Player entrou
-Players.PlayerAdded:Connect(function(player)
-	playerData[player] = {
-		enabled = false,
-		height = 10
-	}
-
-	print("[Orbit | Parte 1] Dados criados para", player.Name)
-end)
-
--- Player saiu
-Players.PlayerRemoving:Connect(function(player)
-	playerData[player] = nil
-	print("[Orbit | Parte 1] Dados removidos de", player.Name)
-end)
-
--- Recebe dados (por enquanto só salva)
-remote.OnServerEvent:Connect(function(player, enabled, height)
-	if not playerData[player] then return end
-
-	playerData[player].enabled = enabled == true
-	playerData[player].height = math.clamp(tonumber(height) or 10, 0, 50)
-
-	print(
-		"[Orbit | Parte 1]",
-		player.Name,
-		"ON:", playerData[player].enabled,
-		"ALTURA:", playerData[player].height
-	)
-end)
---[[
-	Orbit System
-	Parte 2 - Botão pequeno "Abrir"
-
-	Essa parte:
-	- Cria um botão flutuante
-	- Funciona no mobile
-	- É arrastável
-	- NÃO abre menu ainda
-]]
-
-local gui = script.Parent
-gui.ResetOnSpawn = false
-
--- Botão "Abrir"
-local openButton = Instance.new("TextButton")
-openButton.Name = "OpenButton"
-openButton.Size = UDim2.fromOffset(90, 35)
-openButton.Position = UDim2.fromScale(0.05, 0.5)
-openButton.Text = "Abrir"
-openButton.Font = Enum.Font.GothamBold
-openButton.TextSize = 14
-openButton.TextColor3 = Color3.new(1, 1, 1)
-openButton.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-openButton.Parent = gui
-
--- Cantos arredondados
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 8)
-corner.Parent = openButton
-
--- Mobile friendly
-openButton.Active = true
-openButton.Draggable = true
-
--- Clique (debug)
-openButton.MouseButton1Click:Connect(function()
-	print("[Orbit | Parte 2] Botão Abrir clicado")
-end)
---[[
-	Orbit System
-	Parte 3 - Menu grande + minimizar
-
-	Essa parte:
-	- Cria o menu grande
-	- Cria o botão "-"
-	- Permite esconder o menu
-	- NÃO tem funções reais
-]]
-
-local gui = script.Parent
-gui.ResetOnSpawn = false
-
--- ======================
--- MENU GRANDE
--- ======================
-local mainFrame = Instance.new("Frame")
-mainFrame.Name = "MainMenu"
-mainFrame.Size = UDim2.fromOffset(320, 220)
-mainFrame.Position = UDim2.from
---[[
-	Orbit System
-	Parte 4 - Funções (ON / OFF + Altura)
-
-	Essa parte:
-	- Cria botão ON / OFF
-	- Cria slider de Altura (0 a 50)
-	- NÃO aplica efeito nenhum
-	- NÃO fala com servidor
-]]
-
-local UIS = game:GetService("UserInputService")
-
-local gui = script.Parent
-gui.ResetOnSpawn = false
-
--- ======================
--- ESTADO
--- ======================
-local enabled = false
-local heightValue = 10
-
--- ======================
--- BOTÃO ON / OFF
--- ======================
-local toggle = Instance.new("TextButton")
-toggle.Size = UDim2.fromOffset(260, 40)
-toggle.Position = UDim2.from
---[[
-	Orbit System
-	Parte 5 - Sistema de órbita (servidor)
-
-	Essa parte:
-	- Puxa estruturas soltas
-	- Faz orbitar acima do jogador
-	- NÃO usa menu
-	- NÃO usa RemoteEvent
-]]
+-- Delta Natural Tornado Hub (ALL-IN-ONE)
+-- Coloque este Script em ServerScriptService
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
--- CONFIGURAÇÕES
-local ORBIT_RADIUS = 8          -- distância lateral
-local ORBIT_HEIGHT = 10         -- altura acima do jogador
+local SETTINGS = {}
+local DEFAULTS = {Enabled=false, Height=10}
+
+local ORBIT_RADIUS = 8
 local PULL_FORCE = 120
 local SPIN_FORCE = 90
 
--- Função principal
-local function applyOrbit(player)
-	local character = player.Character
-	if not character then return end
+local function getSettings(plr)
+	SETTINGS[plr] = SETTINGS[plr] or {Enabled=DEFAULTS.Enabled, Height=DEFAULTS.Height}
+	return SETTINGS[plr]
+end
 
-	local hrp = character:FindFirstChild("HumanoidRootPart")
+local function createUI(plr)
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "DeltaTornadoGui"
+	gui.ResetOnSpawn = false
+	gui.Parent = plr:WaitForChild("PlayerGui")
+
+	local openBtn = Instance.new("TextButton")
+	openBtn.Size = UDim2.fromOffset(90, 36)
+	openBtn.Position = UDim2.fromScale(0.02, 0.6)
+	openBtn.Text = "Abrir"
+	openBtn.BackgroundColor3 = Color3.fromRGB(20,20,20)
+	openBtn.TextColor3 = Color3.fromRGB(255,255,255)
+	openBtn.Parent = gui
+	openBtn.Active = true
+	openBtn.Draggable = true
+
+	local frame = Instance.new("Frame")
+	frame.Size = UDim2.fromOffset(320, 220)
+	frame.Position = UDim2.fromScale(0.35, 0.3)
+	frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+	frame.Visible = false
+	frame.Parent = gui
+
+	local corner = Instance.new("UICorner", frame)
+
+	local title = Instance.new("TextLabel")
+	title.Size = UDim2.fromOffset(320, 36)
+	title.Text = "Delta Natural Tornado"
+	title.BackgroundTransparency = 1
+	title.TextColor3 = Color3.fromRGB(255,255,255)
+	title.Parent = frame
+
+	local minimize = Instance.new("TextButton")
+	minimize.Size = UDim2.fromOffset(36, 36)
+	minimize.Position = UDim2.fromOffset(284, 0)
+	minimize.Text = "-"
+	minimize.BackgroundTransparency = 1
+	minimize.TextColor3 = Color3.fromRGB(255,255,255)
+	minimize.Parent = frame
+
+	local onBtn = Instance.new("TextButton")
+	onBtn.Size = UDim2.fromOffset(140, 36)
+	onBtn.Position = UDim2.fromOffset(20, 60)
+	onBtn.Text = "ON"
+	onBtn.BackgroundColor3 = Color3.fromRGB(40,120,40)
+	onBtn.TextColor3 = Color3.fromRGB(255,255,255)
+	onBtn.Parent = frame
+
+	local offBtn = Instance.new("TextButton")
+	offBtn.Size = UDim2.fromOffset(140, 36)
+	offBtn.Position = UDim2.fromOffset(160, 60)
+	offBtn.Text = "OFF"
+	offBtn.BackgroundColor3 = Color3.fromRGB(120,40,40)
+	offBtn.TextColor3 = Color3.fromRGB(255,255,255)
+	offBtn.Parent = frame
+
+	local sliderBg = Instance.new("Frame")
+	sliderBg.Size = UDim2.fromOffset(280, 10)
+	sliderBg.Position = UDim2.fromOffset(20, 130)
+	sliderBg.BackgroundColor3 = Color3.fromRGB(60,60,60)
+	sliderBg.Parent = frame
+
+	local slider = Instance.new("Frame")
+	slider.Size = UDim2.fromOffset(10, 20)
+	slider.Position = UDim2.fromOffset(0, -5)
+	slider.BackgroundColor3 = Color3.fromRGB(200,200,200)
+	slider.Parent = sliderBg
+	slider.Active = true
+	slider.Draggable = true
+
+	local heightLabel = Instance.new("TextLabel")
+	heightLabel.Size = UDim2.fromOffset(280, 24)
+	heightLabel.Position = UDim2.fromOffset(20, 150)
+	heightLabel.Text = "Altura: 10"
+	heightLabel.BackgroundTransparency = 1
+	heightLabel.TextColor3 = Color3.fromRGB(255,255,255)
+	heightLabel.Parent = frame
+
+	openBtn.MouseButton1Click:Connect(function()
+		frame.Visible = true
+	end)
+
+	minimize.MouseButton1Click:Connect(function()
+		frame.Visible = false
+	end)
+
+	onBtn.MouseButton1Click:Connect(function()
+		getSettings(plr).Enabled = true
+	end)
+
+	offBtn.MouseButton1Click:Connect(function()
+		getSettings(plr).Enabled = false
+	end)
+
+	slider:GetPropertyChangedSignal("Position"):Connect(function()
+		local x = math.clamp(slider.Position.X.Offset, 0, sliderBg.AbsoluteSize.X - slider.AbsoluteSize.X)
+		slider.Position = UDim2.fromOffset(x, slider.Position.Y.Offset)
+		local value = math.floor((x / (sliderBg.AbsoluteSize.X - slider.AbsoluteSize.X)) * 50)
+		getSettings(plr).Height = value
+		heightLabel.Text = "Altura: "..value
+	end)
+end
+
+Players.PlayerAdded:Connect(function(plr)
+	getSettings(plr)
+	plr.CharacterAdded:Connect(function()
+		task.wait(1)
+		createUI(plr)
+	end)
+end)
+
+local function applyOrbit(plr)
+	local cfg = getSettings(plr)
+	if not cfg.Enabled then return end
+	local char = plr.Character
+	if not char then return end
+	local hrp = char:FindFirstChild("HumanoidRootPart")
 	if not hrp then return end
 
 	for _, part in ipairs(workspace:GetDescendants()) do
-		if part:IsA("BasePart")
-			and not part.Anchored
-			and not part:IsDescendantOf(character) then
-
-			local targetPos = hrp.Position + Vector3.new(0, ORBIT_HEIGHT, 0)
-			local offset = part.Position - targetPos
-			local distance = offset.Magnitude
-
-			if distance <= ORBIT_RADIUS then
-				local att = part:FindFirstChild("OrbitAtt")
-				if not att then
-					att = Instance.new("Attachment")
-					att.Name = "OrbitAtt"
-					att.Parent = part
-				end
-
-				local vf = part:FindFirstChild("OrbitForce")
-				if not vf then
-					vf = Instance.new("VectorForce")
-					vf.Name = "OrbitForce"
-					vf.Attachment0 = att
-					vf.RelativeTo = Enum.ActuatorRelativeTo.World
-					vf.Parent = part
-				end
+		if part:IsA("BasePart") and not part.Anchored and not part:IsDescendantOf(char) then
+			local targetPos = hrp.Position + Vector3.new(0, cfg.Height, 0)
+			if (part.Position - targetPos).Magnitude <= ORBIT_RADIUS then
+				local att = part:FindFirstChild("OrbitAtt") or Instance.new("Attachment", part)
+				att.Name = "OrbitAtt"
+				local vf = part:FindFirstChild("OrbitForce") or Instance.new("VectorForce", part)
+				vf.Name = "OrbitForce"
+				vf.Attachment0 = att
+				vf.RelativeTo = Enum.ActuatorRelativeTo.World
 
 				local pullDir = (targetPos - part.Position).Unit
 				local pull = pullDir * PULL_FORCE * part.AssemblyMass
-
 				local spinDir = Vector3.new(-pullDir.Z, 0, pullDir.X)
 				local spin = spinDir * SPIN_FORCE * part.AssemblyMass
-
 				vf.Force = pull + spin
 			end
 		end
 	end
 end
 
--- Loop
 RunService.Heartbeat:Connect(function()
-	for _, player in ipairs(Players:GetPlayers()) do
-		applyOrbit(player)
+	for _, plr in ipairs(Players:GetPlayers()) do
+		applyOrbit(plr)
 	end
 end)
