@@ -47,3 +47,42 @@ remote.OnServerEvent:Connect(function(player, enabled, height)
 		"ALTURA:", playerData[player].height
 	)
 end)
+--[[
+	Orbit System
+	Parte 2 - Botão pequeno "Abrir"
+
+	Essa parte:
+	- Cria um botão flutuante
+	- Funciona no mobile
+	- É arrastável
+	- NÃO abre menu ainda
+]]
+
+local gui = script.Parent
+gui.ResetOnSpawn = false
+
+-- Botão "Abrir"
+local openButton = Instance.new("TextButton")
+openButton.Name = "OpenButton"
+openButton.Size = UDim2.fromOffset(90, 35)
+openButton.Position = UDim2.fromScale(0.05, 0.5)
+openButton.Text = "Abrir"
+openButton.Font = Enum.Font.GothamBold
+openButton.TextSize = 14
+openButton.TextColor3 = Color3.new(1, 1, 1)
+openButton.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+openButton.Parent = gui
+
+-- Cantos arredondados
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = openButton
+
+-- Mobile friendly
+openButton.Active = true
+openButton.Draggable = true
+
+-- Clique (debug)
+openButton.MouseButton1Click:Connect(function()
+	print("[Orbit | Parte 2] Botão Abrir clicado")
+end)
