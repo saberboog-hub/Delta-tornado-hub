@@ -86,3 +86,24 @@ openButton.Draggable = true
 openButton.MouseButton1Click:Connect(function()
 	print("[Orbit | Parte 2] Botão Abrir clicado")
 end)
+--[[
+	Orbit System
+	Parte 3 - Menu grande + minimizar
+
+	Essa parte:
+	- Cria o menu grande
+	- Cria o botão "-"
+	- Permite esconder o menu
+	- NÃO tem funções reais
+]]
+
+local gui = script.Parent
+gui.ResetOnSpawn = false
+
+-- ======================
+-- MENU GRANDE
+-- ======================
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainMenu"
+mainFrame.Size = UDim2.fromOffset(320, 220)
+mainFrame.Position = UDim2.from
