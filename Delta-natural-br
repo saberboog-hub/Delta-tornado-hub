@@ -107,3 +107,31 @@ local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainMenu"
 mainFrame.Size = UDim2.fromOffset(320, 220)
 mainFrame.Position = UDim2.from
+--[[
+	Orbit System
+	Parte 4 - Funções (ON / OFF + Altura)
+
+	Essa parte:
+	- Cria botão ON / OFF
+	- Cria slider de Altura (0 a 50)
+	- NÃO aplica efeito nenhum
+	- NÃO fala com servidor
+]]
+
+local UIS = game:GetService("UserInputService")
+
+local gui = script.Parent
+gui.ResetOnSpawn = false
+
+-- ======================
+-- ESTADO
+-- ======================
+local enabled = false
+local heightValue = 10
+
+-- ======================
+-- BOTÃO ON / OFF
+-- ======================
+local toggle = Instance.new("TextButton")
+toggle.Size = UDim2.fromOffset(260, 40)
+toggle.Position = UDim2.from
