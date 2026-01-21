@@ -135,3 +135,75 @@ local heightValue = 10
 local toggle = Instance.new("TextButton")
 toggle.Size = UDim2.fromOffset(260, 40)
 toggle.Position = UDim2.from
+--[[
+	Orbit System
+	Parte 5 - Sistema de órbita (servidor)
+
+	Essa parte:
+	- Puxa estruturas soltas
+	- Faz orbitar acima do jogador
+	- NÃO usa menu
+	- NÃO usa RemoteEvent
+]]
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+-- CONFIGURAÇÕES
+local ORBIT_RADIUS = 8          -- distância lateral
+local ORBIT_HEIGHT = 10         -- altura acima do jogador
+local PULL_FORCE = 120
+local SPIN_FORCE = 90
+
+-- Função principal
+local function applyOrbit(player)
+	local character = player.Character
+	if not character then return end
+
+	local hrp = character:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+
+	for _, part in ipairs(workspace:GetDescendants()) do
+		if part:IsA("BasePart")
+			and not part.Anchored
+			and not part:IsDescendantOf(character) then
+
+			local targetPos = hrp.Position + Vector3.new(0, ORBIT_HEIGHT, 0)
+			local offset = part.Position - targetPos
+			local distance = offset.Magnitude
+
+			if distance <= ORBIT_RADIUS then
+				local att = part:FindFirstChild("OrbitAtt")
+				if not att then
+					att = Instance.new("Attachment")
+					att.Name = "OrbitAtt"
+					att.Parent = part
+				end
+
+				local vf = part:FindFirstChild("OrbitForce")
+				if not vf then
+					vf = Instance.new("VectorForce")
+					vf.Name = "OrbitForce"
+					vf.Attachment0 = att
+					vf.RelativeTo = Enum.ActuatorRelativeTo.World
+					vf.Parent = part
+				end
+
+				local pullDir = (targetPos - part.Position).Unit
+				local pull = pullDir * PULL_FORCE * part.AssemblyMass
+
+				local spinDir = Vector3.new(-pullDir.Z, 0, pullDir.X)
+				local spin = spinDir * SPIN_FORCE * part.AssemblyMass
+
+				vf.Force = pull + spin
+			end
+		end
+	end
+end
+
+-- Loop
+RunService.Heartbeat:Connect(function()
+	for _, player in ipairs(Players:GetPlayers()) do
+		applyOrbit(player)
+	end
+end)
