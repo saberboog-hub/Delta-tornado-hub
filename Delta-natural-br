@@ -1,0 +1,50 @@
+--[[ 
+	Orbit System
+	Parte 1 - Base do sistema (sem função real ainda)
+
+	Essa parte:
+	- Cria a base
+	- Guarda dados por player
+	- Recebe informações do menu
+	- Ainda NÃO faz nada no jogo
+]]
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local remote = ReplicatedStorage:WaitForChild("OrbitRemote")
+
+-- Dados de cada jogador
+local playerData = {}
+
+-- Quando o player entra
+Players.PlayerAdded:Connect(function(player)
+	playerData[player] = {
+		enabled = false, -- ligado ou desligado
+		height = 10      -- altura padrão
+	}
+
+	print("[Orbit] Dados criados para", player.Name)
+end)
+
+-- Quando o player sai
+Players.PlayerRemoving:Connect(function(player)
+	playerData[player] = nil
+	print("[Orbit] Dados removidos de", player.Name)
+end)
+
+-- Recebe dados do menu (por enquanto só recebe)
+remote.OnServerEvent:Connect(function(player, enabled, height)
+	if not playerData[player] then return end
+
+	playerData[player].enabled = enabled == true
+	playerData[player].height = math.clamp(tonumber(height) or 10, 0, 50)
+
+	-- Debug simples
+	print(
+		"[Orbit]",
+		player.Name,
+		"ON:", playerData[player].enabled,
+		"ALTURA:", playerData[player].height
+	)
+end)
